@@ -11,6 +11,7 @@ from re import S
 import time
 import socket
 import json
+import random
 
 # ~~~~~============== CONFIGURATION  ==============~~~~~
 # Replace "REPLACEME" with your team name!
@@ -203,6 +204,7 @@ class Algorithm:
         }
 
         self.sent_converted_vale = False
+        self.flag = 0
 
 
     def take_handshake_message(self, message):
@@ -369,29 +371,37 @@ class Algorithm:
 
             # print("OK WTAF")
             print(implied_ask_xlf, implied_bid_xlf, best_bid, best_ask)
+
             if implied_ask_xlf + 10 < best_bid:
 
                 # sell 20 xlf at bid price
-                self.place_order(XLF, SELL, best_bid - 2, 20)
+                self.place_order(XLF, SELL, best_bid - 2, 5)
 
                 # buy all underlying at ask price
                 # buy 6 BOND, 4 GS, 6 MS, 4 WFC at ask price
-                self.place_order(BOND, BUY, self.latest_best_asks[BOND] + 2, 6)
-                self.place_order(GS, BUY, self.latest_best_asks[GS] + 2, 4)
-                self.place_order(MS, BUY, self.latest_best_asks[MS] + 2, 6)
-                self.place_order(WFC, BUY, self.latest_best_asks[WFC] + 2, 4)
+
+                self.place_order(BOND, BUY, self.latest_best_asks[BOND] + 2, self.flag)
+                self.place_order(GS, BUY, self.latest_best_asks[GS] + 2, 1)
+                self.place_order(MS, BUY, self.latest_best_asks[MS] + 2, self.flag)
+                self.place_order(WFC, BUY, self.latest_best_asks[WFC] + 2, 1)
+
 
             elif implied_bid_xlf > best_ask + 10:
 
                 # buy 20 xlf at ask price
-                self.place_order(XLF, BUY, best_ask + 2, 20)
+                self.place_order(XLF, BUY, best_ask + 2, 5)
 
                 # sell all underlying at ask price
                 # sell 6 BOND, 4 GS, 6 MS, 4 WFC at ask price
-                self.place_order(BOND, SELL, self.latest_best_bids[BOND] - 2, 6)
-                self.place_order(GS, SELL, self.latest_best_bids[GS] - 2, 4)
-                self.place_order(MS, SELL, self.latest_best_bids[MS] - 2, 6)
-                self.place_order(WFC, SELL, self.latest_best_bids[WFC] - 2, 4)
+                self.place_order(BOND, SELL, self.latest_best_bids[BOND] - 2, self.flag)
+                self.place_order(GS, SELL, self.latest_best_bids[GS] - 2, 1)
+                self.place_order(MS, SELL, self.latest_best_bids[MS] - 2, self.flag)
+                self.place_order(WFC, SELL, self.latest_best_bids[WFC] - 2, 1)
+
+            if self.flag == 1:
+                self.flag = 2
+            else:
+                self.flag = 1
 
             # elif implied_bid_xlf + 3 < best_ask:
 
