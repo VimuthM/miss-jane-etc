@@ -377,10 +377,10 @@ class Algorithm:
 
                 # sell all underlying at ask price
                 # sell 6 BOND, 4 GS, 6 MS, 4 WFC at ask price
-                self.place_order(BOND, SELL, self.latest_best_asks[BOND], 6)
-                self.place_order(GS, SELL, self.latest_best_asks[GS], 4)
-                self.place_order(MS, SELL, self.latest_best_asks[MS], 6)
-                self.place_order(WFC, SELL, self.latest_best_asks[WFC], 4)
+                self.place_order(BOND, SELL, self.latest_best_bids[BOND], 6)
+                self.place_order(GS, SELL, self.latest_best_bids[GS], 4)
+                self.place_order(MS, SELL, self.latest_best_bids[MS], 6)
+                self.place_order(WFC, SELL, self.latest_best_bids[WFC], 4)
 
             elif implied_bid_xlf + 30 < best_ask:
 
