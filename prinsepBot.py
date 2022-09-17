@@ -326,7 +326,10 @@ class Algorithm:
 
             if symbol == XLF:
                 self.xlf_algo(message_obj)
-                
+
+            if symbol in [GS, MS, WFC]:
+                self.bank_algo(message_obj)
+
 
         if message_obj.get_type() == "fill":
             self.add_fill(message_obj)
@@ -335,6 +338,18 @@ class Algorithm:
             self.handle_ack(message_obj)
 
         self.independent()
+
+    
+    def bank_algo(self, message_obj: Message):
+        
+        last_bid_gs = self.latest_best_bids[GS]
+        last_ask_gs = self.latest_best_asks[GS]
+        last_bid_ms = self.latest_best_bids[MS]
+        last_ask_ms = self.latest_best_asks[MS]
+        last_bid_wfc = self.latest_best_bids[WFC]
+        last_ask_wfc = self.latest_best_asks[WFC]
+
+
 
 
     def xlf_algo(self, message_obj: Message):
@@ -354,53 +369,53 @@ class Algorithm:
 
             # print("OK WTAF")
             print(implied_ask_xlf, implied_bid_xlf, best_bid, best_ask)
-            if implied_ask_xlf + 2 < best_bid:
+            if implied_ask_xlf + 10 < best_bid:
 
                 # sell 20 xlf at bid price
-                self.place_order(XLF, SELL, best_bid, 20)
+                self.place_order(XLF, SELL, best_bid - 2, 20)
 
                 # buy all underlying at ask price
                 # buy 6 BOND, 4 GS, 6 MS, 4 WFC at ask price
-                self.place_order(BOND, BUY, self.latest_best_asks[BOND], 6)
-                self.place_order(GS, BUY, self.latest_best_asks[GS], 4)
-                self.place_order(MS, BUY, self.latest_best_asks[MS], 6)
-                self.place_order(WFC, BUY, self.latest_best_asks[WFC], 4)
+                self.place_order(BOND, BUY, self.latest_best_asks[BOND] + 2, 6)
+                self.place_order(GS, BUY, self.latest_best_asks[GS] + 2, 4)
+                self.place_order(MS, BUY, self.latest_best_asks[MS] + 2, 6)
+                self.place_order(WFC, BUY, self.latest_best_asks[WFC] + 2, 4)
 
-            elif implied_bid_xlf > best_ask + 2:
+            elif implied_bid_xlf > best_ask + 10:
 
                 # buy 20 xlf at ask price
-                self.place_order(XLF, BUY, best_ask, 20)
+                self.place_order(XLF, BUY, best_ask + 2, 20)
 
                 # sell all underlying at ask price
                 # sell 6 BOND, 4 GS, 6 MS, 4 WFC at ask price
-                self.place_order(BOND, SELL, self.latest_best_bids[BOND], 6)
-                self.place_order(GS, SELL, self.latest_best_bids[GS], 4)
-                self.place_order(MS, SELL, self.latest_best_bids[MS], 6)
-                self.place_order(WFC, SELL, self.latest_best_bids[WFC], 4)
+                self.place_order(BOND, SELL, self.latest_best_bids[BOND] - 2, 6)
+                self.place_order(GS, SELL, self.latest_best_bids[GS] - 2, 4)
+                self.place_order(MS, SELL, self.latest_best_bids[MS] - 2, 6)
+                self.place_order(WFC, SELL, self.latest_best_bids[WFC] - 2, 4)
 
-            elif implied_bid_xlf + 3 < best_ask:
+            # elif implied_bid_xlf + 3 < best_ask:
 
-                # buy all underlying at bid price
-                # buy 3 BOND, 2 GS, 3 MS, 2 WFC at bid price
-                self.place_order(BOND, BUY, self.latest_best_bids[BOND], 3)
-                self.place_order(GS, BUY, self.latest_best_bids[GS], 2)
-                self.place_order(MS, BUY, self.latest_best_bids[MS], 3)
-                self.place_order(WFC, BUY, self.latest_best_bids[WFC], 2)
+            #     # buy all underlying at bid price
+            #     # buy 3 BOND, 2 GS, 3 MS, 2 WFC at bid price
+            #     self.place_order(BOND, BUY, self.latest_best_bids[BOND], 3)
+            #     self.place_order(GS, BUY, self.latest_best_bids[GS], 2)
+            #     self.place_order(MS, BUY, self.latest_best_bids[MS], 3)
+            #     self.place_order(WFC, BUY, self.latest_best_bids[WFC], 2)
 
-                # sell 10 xlf at ask price
-                self.place_order(XLF, SELL, best_ask, 10)
+            #     # sell 10 xlf at ask price
+            #     self.place_order(XLF, SELL, best_ask, 10)
 
-            elif implied_ask_xlf > best_bid + 3:
+            # elif implied_ask_xlf > best_bid + 3:
 
-                # buy 10 xlf at bid price
-                self.place_order(XLF, BUY, best_bid, 10)
+            #     # buy 10 xlf at bid price
+            #     self.place_order(XLF, BUY, best_bid, 10)
 
-                # sell all underlying at ask price
-                # sell 3 BOND, 2 GS, 3 MS, 2 WFC at ask price
-                self.place_order(BOND, SELL, self.latest_best_asks[BOND], 3)
-                self.place_order(GS, SELL, self.latest_best_asks[GS], 2)    
-                self.place_order(MS, SELL, self.latest_best_asks[MS], 3)
-                self.place_order(WFC, SELL, self.latest_best_asks[WFC], 2)
+            #     # sell all underlying at ask price
+            #     # sell 3 BOND, 2 GS, 3 MS, 2 WFC at ask price
+            #     self.place_order(BOND, SELL, self.latest_best_asks[BOND], 3)
+            #     self.place_order(GS, SELL, self.latest_best_asks[GS], 2)    
+            #     self.place_order(MS, SELL, self.latest_best_asks[MS], 3)
+            #     self.place_order(WFC, SELL, self.latest_best_asks[WFC], 2)
 
             
             # when cur pos of XLF == 100, convert 50 to underlying
@@ -430,6 +445,9 @@ class Algorithm:
                 self.conversions[self.cur_order_id] = {"side": BUY, "size": 50, "symbol": XLF}
 
                 self.cur_order_id += 1
+
+            
+
 
                     
     
