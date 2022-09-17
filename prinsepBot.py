@@ -312,7 +312,8 @@ class Algorithm:
                 # cancel all VALE sells
                 for order_id in self.orders_by_symbol[VALE]["SELL"]:
                     self.exchange.send_cancel_message(order_id)
-                    self.orders_by_symbol[VALE]["SELL"].remove(order_id)
+
+                self.orders_by_symbol[VALE]["SELL"] = set()
 
                 # place BUY LO 1 at best_bid
                 self.place_order(VALE, "BUY", best_bid, 1)
@@ -322,7 +323,8 @@ class Algorithm:
                 # cancel all VALE buys
                 for order_id in self.orders_by_symbol[VALE]["BUY"]:
                     self.exchange.send_cancel_message(order_id)
-                    self.orders_by_symbol[VALE]["BUY"].remove(order_id)
+
+                self.orders_by_symbol[VALE]["BUY"] = set()
 
                 # place SELL LO 1 at best_ask
                 self.place_order(VALE, "SELL", best_ask, 1)
