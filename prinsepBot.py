@@ -331,8 +331,8 @@ class Algorithm:
             if symbol == BOND:
                 self.bond_algo(message_obj)
 
-            if symbol == XLF:
-                self.xlf_algo(message_obj)
+            # if symbol == XLF:
+                # self.xlf_algo(message_obj)
                 
 
         if message_obj.get_type() == "fill":
