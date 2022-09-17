@@ -247,6 +247,7 @@ class Algorithm:
 
         self.all_orders[order_id]["filled"] += message_obj.get_size()
 
+        # track current position
         self.positions[symbol] += message_obj.message["size"] * (1 if message_obj.get_direction() == "BUY" else -1)
 
 
@@ -299,7 +300,41 @@ class Algorithm:
             spread = best_ask - best_bid
             X = spread - 2
 
+            unfilled_buy_orders = self.orders_by_symbol[BOND]["BUY"]
+            unfilled_sell_orders = self.orders_by_symbol[BOND]["SELL"]
 
+            total_unfilled_lo = len(unfilled_buy_orders) + len(unfilled_sell_orders)
+
+            if total_unfilled_lo < 20:
+
+                BOND_INV = self.positions[BOND]
+
+                if abs(BOND_INV) < 15:
+                    if spread > 2 and best_bid < 1000 and best_ask > 1000:
+
+                        # buy X at bid price + 1
+                        self.place_order(BOND, "BUY", best_bid + 1, X)
+
+                         # sell X at ask price - 1
+                        self.place_order(BOND, "SELL", best_ask - 1, X)
+
+                elif BOND_INV >= 15:
+                    if spread > 2 and best_bid < 1000 and best_ask > 1000:
+
+                        # buy X at bid price + 1
+                        self.place_order(BOND, "BUY", best_bid + 1, X)
+
+                        # sell 2*X at ask price - 1
+                        self.place_order(BOND, "SELL", best_ask - 1, 2*X)
+
+                elif BOND_INV <= -15:
+                    if spread > 2 and best_bid < 1000 and best_ask > 1000:
+
+                        # buy 2*X at bid price + 1
+                        self.place_order(BOND, "BUY", best_bid + 1, 2*X)
+
+                        # sell X at ask price - 1
+                        self.place_order(BOND, "SELL", best_ask - 1, X)               
 
     
     def vale_algo(self, message_obj: Message):
@@ -310,24 +345,24 @@ class Algorithm:
             if best_bid < self.latest_best_asks[VALBZ] - 3:
 
                 # cancel all VALE sells
-                for order_id in self.orders_by_symbol[VALE]["SELL"]:
+                for order_id in self.orders_by_symbol[VALE][SELL]:
                     self.exchange.send_cancel_message(order_id)
 
-                self.orders_by_symbol[VALE]["SELL"] = set()
+                self.orders_by_symbol[VALE][SELL] = set()
 
                 # place BUY LO 1 at best_bid
-                self.place_order(VALE, "BUY", best_bid, 1)
+                self.place_order(VALE, BUY, best_bid, 1)
 
             if best_bid > self.latest_best_asks[VALBZ] + 3:
 
                 # cancel all VALE buys
-                for order_id in self.orders_by_symbol[VALE]["BUY"]:
+                for order_id in self.orders_by_symbol[VALE][BUY]:
                     self.exchange.send_cancel_message(order_id)
 
-                self.orders_by_symbol[VALE]["BUY"] = set()
+                self.orders_by_symbol[VALE][BUY] = set()
 
                 # place SELL LO 1 at best_ask
-                self.place_order(VALE, "SELL", best_ask, 1)
+                self.place_order(VALE, SELL, best_ask, 1)
     
 
     def independent(self):
