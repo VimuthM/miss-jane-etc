@@ -202,6 +202,8 @@ class Algorithm:
             XLF: {BUY: set(), SELL: set()},
         }
 
+        self.sent_converted_vale = False
+
 
     def take_handshake_message(self, message):
         market = message["symbols"]
@@ -254,6 +256,8 @@ class Algorithm:
             d = self.conversions[order_id]
 
             if d["symbol"] == VALE:
+                
+                self.sent_converted_vale = False  # reset
 
                 if d["side"] == BUY:
                     self.positions[VALE] += d["size"]
@@ -261,6 +265,7 @@ class Algorithm:
                 if d["side"] == SELL:
                     self.positions[VALE] -= d["size"]
                     self.positions[VALBZ] += d["size"]
+
 
             if d["symbol"] == XLF:
 
@@ -506,6 +511,9 @@ class Algorithm:
 
     def independent(self):
 
+        if self.sent_converted_vale:
+            return
+
         IVALE = round(self.positions[VALE])
         IVALBZ = round(self.positions[VALBZ])
 
@@ -540,6 +548,7 @@ class Algorithm:
             self.conversions[self.cur_order_id] = {"side": SELL, "size": amt, "symbol": VALE}
             self.cur_order_id += 1
 
+        self.sent_converted_vale = True
 
         # if round(self.positions[VALE]) == -10:
 
