@@ -295,6 +295,10 @@ class Algorithm:
                         # place SELL LO 1 at best_ask
                         self.place_order(VALE, "SELL", best_ask, 1)
 
+
+        if message_obj.get_type() == "fill":
+            self.add_fill(message_obj)
+
         self.independent()
 
     
