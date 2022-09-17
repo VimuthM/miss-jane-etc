@@ -249,18 +249,19 @@ class Algorithm:
             # remove from set of integers
             self.orders_by_symbol[symbol][message_obj["dir"]].remove(order_id)
 
-            # algo
-            if message_obj.get_symbol() == VALE:
 
-                if message_obj.message["dir"] == "BUY":
+        # algo
+        if message_obj.get_symbol() == VALE:
 
-                    # sell VALBZ at last ask
-                    self.place_order(VALBZ, "SELL", self.latest_best_asks[VALBZ], 1)
+            if message_obj.message["dir"] == "BUY":
 
-                else:
+                # sell VALBZ at last ask
+                self.place_order(VALBZ, "SELL", self.latest_best_asks[VALBZ], 1)
 
-                    # buy VALBZ at last bid
-                    self.place_order(VALBZ, "BUY", self.latest_best_bids[VALBZ], 1)
+            else:
+
+                # buy VALBZ at last bid
+                self.place_order(VALBZ, "BUY", self.latest_best_bids[VALBZ], 1)
 
 
 
@@ -331,13 +332,13 @@ def main():
     # Send an order for BOND at a good price, but it is low enough that it is
     # unlikely it will be traded against. Maybe there is a better price to
     # pick? Also, you will need to send more orders over time.
-    exchange.send_add_message(order_id=1, symbol="BOND", dir=BUY, price=990, size=1)
+    # exchange.send_add_message(order_id=1, symbol="BOND", dir=BUY, price=990, size=1)
 
     # Set up some variables to track the bid and ask price of a symbol. Right
     # now this doesn't track much information, but it's enough to get a sense
     # of the VALE market.
-    vale_bid_price, vale_ask_price = None, None
-    vale_last_print_time = time.time()
+    # vale_bid_price, vale_ask_price = None, None
+    # vale_last_print_time = time.time()
 
     # Here is the main loop of the program. It will continue to read and
     # process messages in a loop until a "close" message is received. You
