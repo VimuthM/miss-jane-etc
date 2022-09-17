@@ -19,8 +19,8 @@ team_name = "PRINSEPSTREET"
 
 # ~~~~~============== HELPER FUNCTIONS  ==============~~~~~
 
-BUY = BUY
-SELL = SELL
+BUY = "BUY"
+SELL = "SELL"
 
 
 class ExchangeConnection:
@@ -248,16 +248,16 @@ class Algorithm:
 
         order_id = message_obj.get_order_id()
         
-        # if this is a conversion
+        # if this is a conversion - right now hardcode VALE and VALBZ
         if order_id in self.conversions:
             d = self.conversions[order_id]
 
             if d["side"] == BUY:
-                self.positions[VALE] += 5
-                self.positions[VALBZ] -= 5
+                self.positions[VALE] += d["size"]
+                self.positions[VALBZ] -= d["size"]
             if d["side"] == SELL:
-                self.positions[VALBZ] += 5
-                self.positions[VALE] -= 5
+                self.positions[VALE] -= d["size"]
+                self.positions[VALBZ] += d["size"]
 
 
     def add_fill(self, message_obj: Message):
@@ -390,25 +390,47 @@ class Algorithm:
 
     def independent(self):
 
-        if round(self.positions[VALE]) == 10:
+        IVALE = round(self.positions[VALE])
+        IVALBZ = round(self.positions[VALBZ])
 
-            # convert 5 vale to valbz
-            self.exchange.send_convert_message(self.cur_order_id, VALE, SELL, 5)
-            self.conversions[self.order_id] = {"side": SELL, "size": 5, "symbol": VALE}
+        if IVALE == 10:
+
+            amt = (IVALE - IVALBZ) // 2
+
+            # convert amt vale to valbz
+            self.exchange.send_convert_message(self.cur_order_id, VALE, SELL, amt)
+            self.conversions[self.cur_order_id] = {"side": SELL, "size": amt, "symbol": VALE}
+            self.cur_order_id += 1
+
+        elif IVALE == -10:
+            
+            amt = (IVALBZ - IVALE) // 2
+            self.exchange.send_convert_message(self.cur_order_id, VALE, BUY, amt)
+            self.conversions[self.cur_order_id] = {"side": BUY, "size": amt, "symbol": VALE}
+            self.cur_order_id += 1
+
+        elif IVALBZ == 10:
+            
+            amt = (IVALBZ - IVALE) // 2
+            self.exchange.send_convert_message(self.cur_order_id, VALE, BUY, amt)
+            self.conversions[self.cur_order_id] = {"side": BUY, "size": amt, "symbol": VALE}
+            self.cur_order_id += 1
+
+        elif IVALBZ == -10:
+
+            amt = (IVALE - IVALBZ) // 2
+            # convert amt vale to valbz
+            self.exchange.send_convert_message(self.cur_order_id, VALE, SELL, amt)
+            self.conversions[self.cur_order_id] = {"side": SELL, "size": amt, "symbol": VALE}
             self.cur_order_id += 1
 
 
+        # if round(self.positions[VALE]) == -10:
 
-
-        if round(self.positions[VALE]) == -10:
-
-            # convert 5 valbz to vale
-            self.exchange.send_convert_message(self.cur_order_id, VALE, BUY, 5)
-            self.conversions[self.order_id] = {"side": BUY, "size": 5, "symbol": VALE}
-            self.cur_order_id += 1
-
-
-      
+        #     # convert 5 valbz to vale
+        #     self.exchange.send_convert_message(self.cur_order_id, VALE, BUY, 5)
+        #     self.conversions[self.cur_order_id] = {"side": BUY, "size": 5, "symbol": VALE}
+        #     self.cur_order_id += 1     
 
 
 
