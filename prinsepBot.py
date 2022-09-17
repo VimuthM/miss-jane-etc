@@ -7,6 +7,7 @@
 import argparse
 from collections import deque
 from enum import Enum
+from re import S
 import time
 import socket
 import json
@@ -18,146 +19,8 @@ team_name = "PRINSEPSTREET"
 
 # ~~~~~============== HELPER FUNCTIONS  ==============~~~~~
 
-
-BOND = "BOND"
-VALBZ = "VALBZ"
-VALE = "VALE"
-GS = "GS"
-MS = "MS"
-WFC = "WFC"
-XLF = "XLF"
-
-
-# Global data
-
-
-
-class Algorithm:
-
-    def __init__(self):
-        self.positions = {
-            BOND: 0,
-            VALBZ: 0,
-            VALE: 0,
-            GS: 0,
-            MS: 0,
-            WFC: 0,
-            XLF: 0,
-        }
-
-    def take_handshake_message(self, message):
-        market = message["symbols"]
-
-        for symbol_dict in market:
-            self.positions[symbol_dict["symbol"]] = symbol_dict["position"]
-
-
-
-
-class Message:
-
-    def __init__(self, raw_message):
-        self.message = raw_message
-        self.prices = {}
-
-        # list
-        market = raw_message["symbols"]
-
-    def get_type(self):
-        return self.message["type"]
-
-
-
-
-# ~~~~~============== MAIN LOOP ==============~~~~~
-
-
-def main():
-    args = parse_arguments()
-
-    exchange = ExchangeConnection(args=args)
-
-    # Store and print the "hello" message received from the exchange. This
-    # contains useful information about your positions. Normally you start with
-    # all positions at zero, but if you reconnect during a round, you might
-    # have already bought/sold symbols and have non-zero positions.
-    hello_message = exchange.read_message()
-    print("First message from exchange:", hello_message)
-
-    # Send an order for BOND at a good price, but it is low enough that it is
-    # unlikely it will be traded against. Maybe there is a better price to
-    # pick? Also, you will need to send more orders over time.
-    exchange.send_add_message(order_id=1, symbol="BOND", dir=Dir.BUY, price=990, size=1)
-
-    # Set up some variables to track the bid and ask price of a symbol. Right
-    # now this doesn't track much information, but it's enough to get a sense
-    # of the VALE market.
-    vale_bid_price, vale_ask_price = None, None
-    vale_last_print_time = time.time()
-
-    # Here is the main loop of the program. It will continue to read and
-    # process messages in a loop until a "close" message is received. You
-    # should write to code handle more types of messages (and not just print
-    # the message). Feel free to modify any of the starter code below.
-    #
-    # Note: a common mistake people make is to call write_message() at least
-    # once for every read_message() response.
-    #
-    # Every message sent to the exchange generates at least one response
-    # message. Sending a message in response to every exchange message will
-    # cause a feedback loop where your bot's messages will quickly be
-    # rate-limited and ignored. Please, don't do that!
-    while True:
-        message = exchange.read_message()
-
-        # Some of the message types below happen infrequently and contain
-        # important information to help you understand what your bot is doing,
-        # so they are printed in full. We recommend not always printing every
-        # message because it can be a lot of information to read. Instead, let
-        # your code handle the messages and just print the information
-        # important for you!
-        if message["type"] == "close":
-            print("The round has ended")
-            break
-        elif message["type"] == "error":
-            print(message)
-        elif message["type"] == "reject":
-            print(message)
-        elif message["type"] == "fill":
-            print(message)
-        elif message["type"] == "book":
-            print(message)
-            if message["symbol"] == "VALE":
-
-                def best_price(side):
-                    if message[side]:
-                        return message[side][0][0]
-
-                vale_bid_price = best_price("buy")
-                vale_ask_price = best_price("sell")
-
-                now = time.time()
-
-                if now > vale_last_print_time + 1:
-                    vale_last_print_time = now
-                    print(
-                        {
-                            "vale_bid_price": vale_bid_price,
-                            "vale_ask_price": vale_ask_price,
-                        }
-                    )
-
-
-# ~~~~~============== PROVIDED CODE ==============~~~~~
-
-# You probably don't need to edit anything below this line, but feel free to
-# ask if you have any questions about what it is doing or how it works. If you
-# do need to change anything below this line, please feel free to
-
-
-class Dir(str, Enum):
-    BUY = "BUY"
-    SELL = "SELL"
+BUY = "BUY"
+SELL = "SELL"
 
 
 class ExchangeConnection:
@@ -174,12 +37,10 @@ class ExchangeConnection:
     def read_message(self):
         """Read a single message from the exchange"""
         message = json.loads(self.reader.readline())
-        if "dir" in message:
-            message["dir"] = Dir(message["dir"])
         return message
 
     def send_add_message(
-        self, order_id: int, symbol: str, dir: Dir, price: int, size: int
+        self, order_id: int, symbol: str, dir: str, price: int, size: int
     ):
         """Add a new order"""
         self._write_message(
@@ -193,7 +54,7 @@ class ExchangeConnection:
             }
         )
 
-    def send_convert_message(self, order_id: int, symbol: str, dir: Dir, size: int):
+    def send_convert_message(self, order_id: int, symbol: str, dir: str, size: int):
         """Convert between related symbols"""
         self._write_message(
             {
@@ -222,6 +83,9 @@ class ExchangeConnection:
 
     def _write_message(self, message):
         what_to_write = json.dumps(message)
+
+        print("Wrote message", what_to_write)
+
         if not what_to_write.endswith("\n"):
             what_to_write = what_to_write + "\n"
 
@@ -243,6 +107,311 @@ class ExchangeConnection:
             print(
                 "WARNING: You are sending messages too frequently. The exchange will start ignoring your messages. Make sure you are not sending a message in response to every exchange message."
             )
+
+
+
+
+BOND = "BOND"
+VALBZ = "VALBZ"
+VALE = "VALE"
+GS = "GS"
+MS = "MS"
+WFC = "WFC"
+XLF = "XLF"
+
+
+
+class Message:
+
+    def __init__(self, raw_message):
+        self.message = raw_message
+
+    def get_type(self):
+        return self.message["type"]
+
+    def get_symbol(self):
+        return self.message["symbol"]
+
+    def get_best_bid(self):
+        return self.message["buy"][0][0]
+
+    def get_best_ask(self):
+        return self.message["sell"][0][0]
+
+
+
+class Algorithm:
+
+    def __init__(self, exchange: ExchangeConnection):
+        self.exchange = exchange
+        self.cur_order_id = 0
+
+        self.positions = {
+            BOND: 0,
+            VALBZ: 0,
+            VALE: 0,
+            GS: 0,
+            MS: 0,
+            WFC: 0,
+            XLF: 0,
+        }
+
+        self.latest_best_asks = {
+            BOND: float("-inf"),
+            VALBZ: float("-inf"),
+            VALE: float("-inf"),
+            GS: float("-inf"),
+            MS: float("-inf"),
+            WFC: float("-inf"),
+            XLF: float("-inf"),
+        }
+
+        self.latest_best_bids = {
+            BOND: float("inf"),
+            VALBZ: float("inf"),
+            VALE: float("inf"),
+            GS: float("inf"),
+            MS: float("inf"),
+            WFC: float("inf"),
+            XLF: float("inf"),
+        }
+        
+        self.all_orders = {
+
+        }
+
+        self.orders_by_symbol = {
+            BOND: {"BUY": set(), "SELL": set()},
+            VALBZ: {"BUY": set(), "SELL": set()},
+            VALE: {"BUY": set(), "SELL": set()},
+            GS: {"BUY": set(), "SELL": set()},
+            MS: {"BUY": set(), "SELL": set()},
+            WFC: {"BUY": set(), "SELL": set()},
+            XLF: {"BUY": set(), "SELL": set()},
+        }
+
+
+    def take_handshake_message(self, message):
+        market = message["symbols"]
+
+        for symbol_dict in market:
+            self.positions[symbol_dict["symbol"]] = symbol_dict["position"]
+
+    # track best qtys
+    def remember_best(self, message_obj: Message):
+        symbol = message_obj.get_symbol()
+        if len(message_obj.message["buy"]) != 0:
+            self.latest_best_bids[symbol] = message_obj.get_best_bid()
+
+        
+        if len(message_obj.message["sell"]) != 0:
+            self.latest_best_asks[symbol] = message_obj.get_best_ask()
+
+
+    def parse(self, message_obj: Message):
+        if message_obj.get_type() == "hello":
+            self.take_handshake_message(message_obj.message)
+            return
+        
+        self.evaluate(message_obj)
+
+
+    def place_order(self, symbol, dir, price, size):
+
+        # send message
+        self.exchange.send_add_message(self.cur_order_id, symbol, dir, price, size)
+
+        self.all_orders[self.cur_order_id] = {
+            "to_fill": size,
+            "filled": 0
+        }
+
+        # rmb the id
+        self.orders_by_symbol[symbol][dir].add(self.cur_order_id)
+
+        self.cur_order_id += 1
+
+
+    def add_fill(self, message_obj: Message):
+        
+        symbol = message_obj.get_symbol()
+        order_id = message_obj.message["order_id"]
+
+        self.all_orders[order_id]["filled"] += message_obj.message["size"]
+
+
+        self.positions[symbol] += message_obj.message["size"] * (1 if message_obj.message["dir"] == "BUY" else -1)
+
+
+        # cleared all
+        if self.all_orders[order_id]["filled"] == self.all_orders[order_id]["to_fill"]:
+
+            # remove from set of integers
+            self.orders_by_symbol[symbol][message_obj["dir"]].remove(order_id)
+
+            # algo
+            if message_obj.get_symbol() == VALE:
+
+                if message_obj.message["dir"] == "BUY":
+
+                    # sell VALBZ at last ask
+                    self.place_order(VALBZ, "SELL", self.latest_best_asks[VALBZ], 1)
+
+                else:
+
+                    # buy VALBZ at last bid
+                    self.place_order(VALBZ, "BUY", self.latest_best_bids[VALBZ], 1)
+
+
+
+    def evaluate(self, message_obj: Message):
+
+        if message_obj.get_type() == "book":
+
+            self.remember_best(message_obj)
+
+            symbol = message_obj.get_symbol()
+
+            if len(message_obj.message["buy"]) != 0 and len(message_obj.message["sell"]) != 0:
+                best_bid, best_ask = message_obj.get_best_bid(), message_obj.get_best_ask()
+
+                if symbol == VALE:
+                    if best_bid < self.latest_best_asks[VALBZ] - 3:
+
+                        # cancel all VALE sells
+                        for order_id in self.orders_by_symbol[VALE]["SELL"]:
+                            self.exchange.send_cancel_message(order_id)
+
+                        # place BUY LO 1 at best_bid
+                        self.place_order(VALE, "BUY", best_bid, 1)
+
+                    if best_bid > self.latest_best_asks[VALBZ] + 3:
+
+                        # cancel all VALE buys
+                        for order_id in self.orders_by_symbol[VALE]["BUY"]:
+                            self.exchange.send_cancel_message(order_id)
+
+                        # place SELL LO 1 at best_ask
+                        self.place_order(VALE, "SELL", best_ask, 1)
+
+        self.independent()
+
+    
+    def independent(self):
+
+        if round(self.positions[VALE]) == 10:
+
+            # convert 5 vale to valbz
+            self.exchange.send_convert_message(self.cur_order_id, VALE, SELL, 5)
+
+        if round(self.positions[VALE]) == -10:
+
+            # convert 5 valbz to vale
+            self.exchange.send_convert_message(self.cur_order_id, VALE, BUY, 5)
+
+      
+
+
+
+# ~~~~~============== MAIN LOOP ==============~~~~~
+
+
+def main():
+    args = parse_arguments()
+
+    exchange = ExchangeConnection(args=args)
+
+    # Store and print the "hello" message received from the exchange. This
+    # contains useful information about your positions. Normally you start with
+    # all positions at zero, but if you reconnect during a round, you might
+    # have already bought/sold symbols and have non-zero positions.
+    hello_message = exchange.read_message()
+    print("First message from exchange:", hello_message)
+
+    # Send an order for BOND at a good price, but it is low enough that it is
+    # unlikely it will be traded against. Maybe there is a better price to
+    # pick? Also, you will need to send more orders over time.
+    exchange.send_add_message(order_id=1, symbol="BOND", dir=BUY, price=990, size=1)
+
+    # Set up some variables to track the bid and ask price of a symbol. Right
+    # now this doesn't track much information, but it's enough to get a sense
+    # of the VALE market.
+    vale_bid_price, vale_ask_price = None, None
+    vale_last_print_time = time.time()
+
+    # Here is the main loop of the program. It will continue to read and
+    # process messages in a loop until a "close" message is received. You
+    # should write to code handle more types of messages (and not just print
+    # the message). Feel free to modify any of the starter code below.
+    #
+    # Note: a common mistake people make is to call write_message() at least
+    # once for every read_message() response.
+    #
+    # Every message sent to the exchange generates at least one response
+    # message. Sending a message in response to every exchange message will
+    # cause a feedback loop where your bot's messages will quickly be
+    # rate-limited and ignored. Please, don't do that!
+
+    algo = Algorithm(exchange=exchange)
+
+
+    while True:
+        message = exchange.read_message()
+        print(message)
+        message_obj = Message(message)
+
+        # Some of the message types below happen infrequently and contain
+        # important information to help you understand what your bot is doing,
+        # so they are printed in full. We recommend not always printing every
+        # message because it can be a lot of information to read. Instead, let
+        # your code handle the messages and just print the information
+        # important for you!
+
+        algo.parse(message_obj)
+
+
+        # if message_obj.get_type() == "close":
+        #     print("The round has ended")
+        #     break
+        # elif message_obj.get_type() == "hello":
+        #     print("The round has started")
+        #     algo.take_handshake_message(message)
+        # elif message_obj.get_type() == "error":
+        #     print(message)
+        # elif message_obj.get_type() == "reject":
+        #     print(message)
+        # elif message_obj.get_type() == "fill":
+
+        #     algo.add_fill(message_obj)
+
+
+        # elif message_obj.get_type() == "book":
+
+        #     if message_obj.get_symbol() == "VALE":
+
+        #         algo.remember_best(message_obj)
+
+
+        #         vale_bid_price = message_obj.get_best_bid()
+        #         vale_ask_price = message_obj.get_best_ask()
+
+        #         now = time.time()
+
+        #         if now > vale_last_print_time + 1:
+        #             vale_last_print_time = now
+        #             print(
+        #                 {
+        #                     "vale_bid_price": vale_bid_price,
+        #                     "vale_ask_price": vale_ask_price,
+        #                 }
+        #             )
+
+
+# ~~~~~============== PROVIDED CODE ==============~~~~~
+
+# You probably don't need to edit anything below this line, but feel free to
+# ask if you have any questions about what it is doing or how it works. If you
+# do need to change anything below this line, please feel free to
 
 
 def parse_arguments():
