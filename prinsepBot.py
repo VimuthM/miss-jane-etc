@@ -252,13 +252,10 @@ class Algorithm:
         
         # if this is a conversion - right now hardcode VALE and VALBZ
         if order_id in self.conversions:
-
             d = self.conversions[order_id]
 
             if d["symbol"] == VALE:
-                
                 self.sent_converted_vale = False  # reset
-
                 if d["side"] == BUY:
                     self.positions[VALE] += d["size"]
                     self.positions[VALBZ] -= d["size"]
@@ -268,13 +265,12 @@ class Algorithm:
 
 
             if d["symbol"] == XLF:
-
                 if d["side"] == BUY:
                     self.positions[XLF] += d["size"]
                     self.positions[BOND] -= d["size"] * 0.3
+                    self.positions[WFC] -= d["size"] * 0.2
                     self.positions[GS] -= d["size"] * 0.2
                     self.positions[MS] -= d["size"] * 0.3
-                    self.positions[WFC] -= d["size"] * 0.2
                 
                 if d["side"] == SELL:  # sell xlf for underlying
                     self.positions[XLF] -= d["size"]
@@ -304,16 +300,13 @@ class Algorithm:
 
         # algo
         if message_obj.get_symbol() == VALE:
-
             if message_obj.message["dir"] == BUY:
-
                 # sell VALBZ at last ask
                 self.place_order(VALBZ, SELL, self.latest_best_asks[VALBZ], 1)
-
             else:
-
                 # buy VALBZ at last bid
                 self.place_order(VALBZ, BUY, self.latest_best_bids[VALBZ], 1)
+
 
 
 
@@ -338,7 +331,7 @@ class Algorithm:
         if message_obj.get_type() == "fill":
             self.add_fill(message_obj)
 
-        if message_obj.get_type == "ack":
+        if message_obj.get_type() == "ack":
             self.handle_ack(message_obj)
 
         self.independent()
@@ -356,9 +349,12 @@ class Algorithm:
 
             # Implied ask Price XLF =  3 * 1000 + 2 * ask price GS + 3 * ask price MS + 2 * ask price WFC
             implied_ask_xlf = 3 * 1000 + 2 * self.latest_best_asks[GS] + 3 * self.latest_best_asks[MS] + 2 * self.latest_best_asks[WFC]
+            implied_bid_xlf /= 10
+            implied_ask_xlf /= 10
 
-
-            if implied_ask_xlf + 20 < best_bid:
+            # print("OK WTAF")
+            print(implied_ask_xlf, implied_bid_xlf, best_bid, best_ask)
+            if implied_ask_xlf + 2 < best_bid:
 
                 # sell 20 xlf at bid price
                 self.place_order(XLF, SELL, best_bid, 20)
@@ -370,19 +366,19 @@ class Algorithm:
                 self.place_order(MS, BUY, self.latest_best_asks[MS], 6)
                 self.place_order(WFC, BUY, self.latest_best_asks[WFC], 4)
 
-            elif implied_bid_xlf > best_ask + 20:
+            elif implied_bid_xlf > best_ask + 2:
 
                 # buy 20 xlf at ask price
                 self.place_order(XLF, BUY, best_ask, 20)
 
                 # sell all underlying at ask price
                 # sell 6 BOND, 4 GS, 6 MS, 4 WFC at ask price
-                self.place_order(BOND, SELL, self.latest_best_asks[BOND], 6)
-                self.place_order(GS, SELL, self.latest_best_asks[GS], 4)
-                self.place_order(MS, SELL, self.latest_best_asks[MS], 6)
-                self.place_order(WFC, SELL, self.latest_best_asks[WFC], 4)
+                self.place_order(BOND, SELL, self.latest_best_bids[BOND], 6)
+                self.place_order(GS, SELL, self.latest_best_bids[GS], 4)
+                self.place_order(MS, SELL, self.latest_best_bids[MS], 6)
+                self.place_order(WFC, SELL, self.latest_best_bids[WFC], 4)
 
-            elif implied_bid_xlf + 30 < best_ask:
+            elif implied_bid_xlf + 3 < best_ask:
 
                 # buy all underlying at bid price
                 # buy 3 BOND, 2 GS, 3 MS, 2 WFC at bid price
@@ -394,7 +390,7 @@ class Algorithm:
                 # sell 10 xlf at ask price
                 self.place_order(XLF, SELL, best_ask, 10)
 
-            elif implied_ask_xlf > best_bid + 30:
+            elif implied_ask_xlf > best_bid + 3:
 
                 # buy 10 xlf at bid price
                 self.place_order(XLF, BUY, best_bid, 10)
@@ -408,7 +404,7 @@ class Algorithm:
 
             
             # when cur pos of XLF == 100, convert 50 to underlying
-            if self.positions[XLF] == 100:
+            if self.positions[XLF] >= 80:
                 
                 self.exchange.send_convert_message(
                     self.cur_order_id,
@@ -422,7 +418,7 @@ class Algorithm:
                 self.cur_order_id += 1
 
             # when cur pos of XLF == -100, convert underlying to 50
-            if self.positions[XLF] == -100:
+            if self.positions[XLF] <= -80:
 
                 self.exchange.send_convert_message(
                     self.cur_order_id,
