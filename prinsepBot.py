@@ -479,6 +479,7 @@ def main():
     while True:
         message = exchange.read_message()
         print(message)
+        print("Current positions:", algo.positions)
         message_obj = Message(message)
 
         # Some of the message types below happen infrequently and contain
