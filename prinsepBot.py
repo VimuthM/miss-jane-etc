@@ -154,6 +154,10 @@ class Algorithm:
         self.exchange = exchange
         self.cur_order_id = 0
 
+        # integer to 
+        self.conversions = {}
+
+
         self.positions = {
             BOND: 0,
             VALBZ: 0,
@@ -240,6 +244,22 @@ class Algorithm:
         self.cur_order_id += 1
 
 
+    def handle_ack(self, message_obj: Message):
+
+        order_id = message_obj.get_order_id()
+        
+        # if this is a conversion
+        if order_id in self.conversions:
+            d = self.conversions[order_id]
+
+            if d["side"] == "BUY":
+                self.positions[VALE] += 5
+                self.positions[VALBZ] -= 5
+            if d["side"] == "SELL":
+                self.positions[VALBZ] += 5
+                self.positions[VALE] -= 5
+
+
     def add_fill(self, message_obj: Message):
         
         symbol = message_obj.get_symbol()
@@ -288,6 +308,9 @@ class Algorithm:
 
         if message_obj.get_type() == "fill":
             self.add_fill(message_obj)
+
+        if message_obj.get_type == "ack":
+            self.handle_ack(message_obj)
 
         self.independent()
 
@@ -371,11 +394,19 @@ class Algorithm:
 
             # convert 5 vale to valbz
             self.exchange.send_convert_message(self.cur_order_id, VALE, SELL, 5)
+            self.conversions[self.order_id] = {"side": SELL, "size": 5, "symbol": VALE}
+            self.cur_order_id += 1
+
+
+
 
         if round(self.positions[VALE]) == -10:
 
             # convert 5 valbz to vale
             self.exchange.send_convert_message(self.cur_order_id, VALE, BUY, 5)
+            self.conversions[self.order_id] = {"side": BUY, "size": 5, "symbol": VALE}
+            self.cur_order_id += 1
+
 
       
 
