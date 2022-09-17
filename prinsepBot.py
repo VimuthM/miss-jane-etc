@@ -358,7 +358,7 @@ class Algorithm:
             implied_ask_xlf = 3 * 1000 + 2 * self.latest_best_asks[GS] + 3 * self.latest_best_asks[MS] + 2 * self.latest_best_asks[WFC]
 
 
-            if implied_bid_xlf + 20 < best_bid:
+            if implied_ask_xlf + 20 < best_bid:
 
                 # sell 20 xlf at bid price
                 self.place_order(XLF, SELL, best_bid, 20)
@@ -375,7 +375,7 @@ class Algorithm:
                 # buy 20 xlf at ask price
                 self.place_order(XLF, BUY, best_ask, 20)
 
-                # buy all underlying at ask price
+                # sell all underlying at ask price
                 # sell 6 BOND, 4 GS, 6 MS, 4 WFC at ask price
                 self.place_order(BOND, SELL, self.latest_best_asks[BOND], 6)
                 self.place_order(GS, SELL, self.latest_best_asks[GS], 4)
