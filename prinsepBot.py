@@ -299,7 +299,8 @@ class Algorithm:
         if self.all_orders[order_id]["filled"] == self.all_orders[order_id]["to_fill"]:
 
             # remove from set of integers
-            self.orders_by_symbol[symbol][message_obj.get_direction()].remove(order_id)
+            if order_id in self.orders_by_symbol[symbol][message_obj.get_direction()]:
+                self.orders_by_symbol[symbol][message_obj.get_direction()].remove(order_id)
 
         # algo
         if message_obj.get_symbol() == VALE:
