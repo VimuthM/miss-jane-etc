@@ -306,6 +306,10 @@ class Algorithm:
             if symbol == BOND:
                 self.bond_algo(message_obj)
 
+            if symbol == XLF:
+                self.xlf_algo(message_obj)
+                
+
         if message_obj.get_type() == "fill":
             self.add_fill(message_obj)
 
@@ -313,6 +317,10 @@ class Algorithm:
             self.handle_ack(message_obj)
 
         self.independent()
+
+
+    def xlf_algo(self, message_obj: Message):
+        pass
 
 
     def bond_algo(self, message_obj: Message):
