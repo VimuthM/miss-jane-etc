@@ -407,8 +407,8 @@ class Algorithm:
                 self.place_order(WFC, SELL, self.latest_best_asks[WFC], 2)
 
             
-            # when cur pos of XLF == 100, convert 50 to underlying
-            if self.positions[XLF] == 100:
+            # when cur pos of XLF == 80, convert 50 to underlying
+            if self.positions[XLF] == 80:
                 
                 self.exchange.send_convert_message(
                     self.cur_order_id,
@@ -421,8 +421,8 @@ class Algorithm:
 
                 self.cur_order_id += 1
 
-            # when cur pos of XLF == -100, convert underlying to 50
-            if self.positions[XLF] == -100:
+            # when cur pos of XLF == -80, convert underlying to 50
+            if self.positions[XLF] == -80:
 
                 self.exchange.send_convert_message(
                     self.cur_order_id,
