@@ -19,8 +19,8 @@ team_name = "PRINSEPSTREET"
 
 # ~~~~~============== HELPER FUNCTIONS  ==============~~~~~
 
-BUY = "BUY"
-SELL = "SELL"
+BUY = BUY
+SELL = SELL
 
 
 class ExchangeConnection:
@@ -193,13 +193,13 @@ class Algorithm:
         }
 
         self.orders_by_symbol = {
-            BOND: {"BUY": set(), "SELL": set()},
-            VALBZ: {"BUY": set(), "SELL": set()},
-            VALE: {"BUY": set(), "SELL": set()},
-            GS: {"BUY": set(), "SELL": set()},
-            MS: {"BUY": set(), "SELL": set()},
-            WFC: {"BUY": set(), "SELL": set()},
-            XLF: {"BUY": set(), "SELL": set()},
+            BOND: {BUY: set(), SELL: set()},
+            VALBZ: {BUY: set(), SELL: set()},
+            VALE: {BUY: set(), SELL: set()},
+            GS: {BUY: set(), SELL: set()},
+            MS: {BUY: set(), SELL: set()},
+            WFC: {BUY: set(), SELL: set()},
+            XLF: {BUY: set(), SELL: set()},
         }
 
 
@@ -252,10 +252,10 @@ class Algorithm:
         if order_id in self.conversions:
             d = self.conversions[order_id]
 
-            if d["side"] == "BUY":
+            if d["side"] == BUY:
                 self.positions[VALE] += 5
                 self.positions[VALBZ] -= 5
-            if d["side"] == "SELL":
+            if d["side"] == SELL:
                 self.positions[VALBZ] += 5
                 self.positions[VALE] -= 5
 
@@ -268,7 +268,7 @@ class Algorithm:
         self.all_orders[order_id]["filled"] += message_obj.get_size()
 
         # track current position
-        self.positions[symbol] += message_obj.message["size"] * (1 if message_obj.get_direction() == "BUY" else -1)
+        self.positions[symbol] += message_obj.message["size"] * (1 if message_obj.get_direction() == BUY else -1)
 
 
         # cleared all
@@ -280,15 +280,15 @@ class Algorithm:
         # algo
         if message_obj.get_symbol() == VALE:
 
-            if message_obj.message["dir"] == "BUY":
+            if message_obj.message["dir"] == BUY:
 
                 # sell VALBZ at last ask
-                self.place_order(VALBZ, "SELL", self.latest_best_asks[VALBZ], 1)
+                self.place_order(VALBZ, SELL, self.latest_best_asks[VALBZ], 1)
 
             else:
 
                 # buy VALBZ at last bid
-                self.place_order(VALBZ, "BUY", self.latest_best_bids[VALBZ], 1)
+                self.place_order(VALBZ, BUY, self.latest_best_bids[VALBZ], 1)
 
 
 
@@ -323,8 +323,8 @@ class Algorithm:
             spread = best_ask - best_bid
             X = spread - 2
 
-            unfilled_buy_orders = self.orders_by_symbol[BOND]["BUY"]
-            unfilled_sell_orders = self.orders_by_symbol[BOND]["SELL"]
+            unfilled_buy_orders = self.orders_by_symbol[BOND][BUY]
+            unfilled_sell_orders = self.orders_by_symbol[BOND][SELL]
 
             total_unfilled_lo = len(unfilled_buy_orders) + len(unfilled_sell_orders)
 
@@ -336,28 +336,28 @@ class Algorithm:
                     if spread > 2 and best_bid < 1000 and best_ask > 1000:
 
                         # buy X at bid price + 1
-                        self.place_order(BOND, "BUY", best_bid + 1, X)
+                        self.place_order(BOND, BUY, best_bid + 1, X)
 
                          # sell X at ask price - 1
-                        self.place_order(BOND, "SELL", best_ask - 1, X)
+                        self.place_order(BOND, SELL, best_ask - 1, X)
 
                 elif BOND_INV >= 15:
                     if spread > 2 and best_bid < 1000 and best_ask > 1000:
 
                         # buy X at bid price + 1
-                        self.place_order(BOND, "BUY", best_bid + 1, X)
+                        self.place_order(BOND, BUY, best_bid + 1, X)
 
                         # sell 2*X at ask price - 1
-                        self.place_order(BOND, "SELL", best_ask - 1, 2*X)
+                        self.place_order(BOND, SELL, best_ask - 1, 2*X)
 
                 elif BOND_INV <= -15:
                     if spread > 2 and best_bid < 1000 and best_ask > 1000:
 
                         # buy 2*X at bid price + 1
-                        self.place_order(BOND, "BUY", best_bid + 1, 2*X)
+                        self.place_order(BOND, BUY, best_bid + 1, 2*X)
 
                         # sell X at ask price - 1
-                        self.place_order(BOND, "SELL", best_ask - 1, X)               
+                        self.place_order(BOND, SELL, best_ask - 1, X)               
 
     
     def vale_algo(self, message_obj: Message):
