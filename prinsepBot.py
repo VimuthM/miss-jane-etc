@@ -138,6 +138,14 @@ class Message:
     def get_best_ask(self):
         return self.message["sell"][0][0]
 
+    def get_direction(self):
+        return self.message["dir"]
+    
+    def get_order_id(self):
+        return self.message["order_id"]
+
+    def get_size(self):
+        return self.message["size"]
 
 
 class Algorithm:
@@ -235,19 +243,19 @@ class Algorithm:
     def add_fill(self, message_obj: Message):
         
         symbol = message_obj.get_symbol()
-        order_id = message_obj.message["order_id"]
+        order_id = message_obj.get_order_id()
 
-        self.all_orders[order_id]["filled"] += message_obj.message["size"]
+        self.all_orders[order_id]["filled"] += message_obj.get_size()
 
 
-        self.positions[symbol] += message_obj.message["size"] * (1 if message_obj.message["dir"] == "BUY" else -1)
+        self.positions[symbol] += message_obj.message["size"] * (1 if message_obj.get_direction() == "BUY" else -1)
 
 
         # cleared all
         if self.all_orders[order_id]["filled"] == self.all_orders[order_id]["to_fill"]:
 
             # remove from set of integers
-            self.orders_by_symbol[symbol][message_obj["dir"]].remove(order_id)
+            self.orders_by_symbol[symbol][message_obj.get_direction()].remove(order_id)
 
 
         # algo
@@ -273,34 +281,38 @@ class Algorithm:
 
             symbol = message_obj.get_symbol()
 
-            if len(message_obj.message["buy"]) != 0 and len(message_obj.message["sell"]) != 0:
-                best_bid, best_ask = message_obj.get_best_bid(), message_obj.get_best_ask()
-
-                if symbol == VALE:
-                    if best_bid < self.latest_best_asks[VALBZ] - 3:
-
-                        # cancel all VALE sells
-                        for order_id in self.orders_by_symbol[VALE]["SELL"]:
-                            self.exchange.send_cancel_message(order_id)
-
-                        # place BUY LO 1 at best_bid
-                        self.place_order(VALE, "BUY", best_bid, 1)
-
-                    if best_bid > self.latest_best_asks[VALBZ] + 3:
-
-                        # cancel all VALE buys
-                        for order_id in self.orders_by_symbol[VALE]["BUY"]:
-                            self.exchange.send_cancel_message(order_id)
-
-                        # place SELL LO 1 at best_ask
-                        self.place_order(VALE, "SELL", best_ask, 1)
-
+            if symbol == VALE:
+                self.vale_algo(message_obj)
 
         if message_obj.get_type() == "fill":
             self.add_fill(message_obj)
 
         self.independent()
 
+    
+    def vale_algo(self, message_obj: Message):
+
+        if len(message_obj.message["buy"]) != 0 and len(message_obj.message["sell"]) != 0:
+            best_bid, best_ask = message_obj.get_best_bid(), message_obj.get_best_ask()
+
+            if best_bid < self.latest_best_asks[VALBZ] - 3:
+
+                # cancel all VALE sells
+                for order_id in self.orders_by_symbol[VALE]["SELL"]:
+                    self.exchange.send_cancel_message(order_id)
+
+                # place BUY LO 1 at best_bid
+                self.place_order(VALE, "BUY", best_bid, 1)
+
+            if best_bid > self.latest_best_asks[VALBZ] + 3:
+
+                # cancel all VALE buys
+                for order_id in self.orders_by_symbol[VALE]["BUY"]:
+                    self.exchange.send_cancel_message(order_id)
+
+                # place SELL LO 1 at best_ask
+                self.place_order(VALE, "SELL", best_ask, 1)
+    
     
     def independent(self):
 
